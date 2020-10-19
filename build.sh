@@ -2,6 +2,10 @@
 
 path="'$PWD/src/vue.js';"
 import="import Vue from $path"
+tail -n+2 "src/items.ts" > "/tmp/tmp-items.ts"
+echo $import > "src/items.ts"
+cat "/tmp/tmp-items.ts" >> "src/items.ts"
+rm "/tmp/tmp-items.ts"
 cat "src/items.ts" > annealing.ts
 cat "src/constraints-parsing.ts" >> annealing.ts
 cat "src/constraints.ts" >> annealing.ts
