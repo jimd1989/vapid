@@ -1,0 +1,27 @@
+{
+  "name": "vapid",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://jimd1989@github.com/jimd1989/vapid.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jimd1989/vapid/issues"
+  },
+  "homepage": "https://github.com/jimd1989/vapid#readme",
+  "dependencies": {
+    "webpack": "^5.11.0",
+    "webpack-cli": "^4.3.0"
+  }
+}
