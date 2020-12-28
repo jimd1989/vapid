@@ -13,26 +13,39 @@ import Halogen.VDom.Driver (runUI)
 main :: Effect Unit
 main = HA.runHalogenAff do
   body <- HA.awaitBody
-  runUI component unit body
+  runUI xomponent unit body
 
 data Action = Increment | Decrement
 
-component =
-  H.mkComponent
-    { initialState
-    , render
-    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
-    }
+xomponent = H.mkComponent
+              { initialState,
+                render,
+                eval: H.mkEval $ H.defaultEval { handleAction = f } }
   where
-  initialState _ = 0
+  initialState = const ["a"]
+  render state = HH.div_ [HH.text $ show state, 
+                         HH.button [ HE.onClick $ const $ Just Increment] [HH.text "+"]]
+  f = case _ of
+    Increment -> H.modify_ \state → state <> ["a"]
+    _         -> H.modify_ identity
 
-  render state =
-    HH.div_
-      [ HH.button [ HE.onClick \_ -> Just Decrement ] [ HH.text "-" ]
-      , HH.div_ [ HH.text $ show state ]
-      , HH.button [ HE.onClick \_ -> Just Increment ] [ HH.text "+" ]
-      ]
-
-  handleAction = case _ of
-    Increment -> H.modify_ \state -> state + 1
-    Decrement -> H.modify_ \state -> state - 1
+-- component =
+--   H.mkComponent
+--     { initialState
+--     , render
+--     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+--     }
+--   where
+--   initialState _ = 0
+-- 
+--   render state =
+--     HH.div_
+--       [ HH.button [ HE.onClick \_ -> Just Decrement ] [ HH.text "-" ]
+--       , HH.div_ [ HH.text $ show state ]
+--       , HH.button [ HE.onClick \_ -> Just Increment ] [ HH.text "+" ]
+--       , HH.ul_ [ HH.li_ [HH.text "ass" ]]
+--       ]
+-- 
+--   handleAction = case _ of
+--     Increment -> H.modify_ \state -> state + 1
+--     Decrement -> H.modify_ \state -> state - 1
