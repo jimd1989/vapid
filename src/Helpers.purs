@@ -5,6 +5,7 @@ import Control.Apply (apply, lift2)
 import Control.Bind (composeKleisliFlipped)
 import Data.Array (drop, length, range, snoc, take, updateAtIndices, zip)
 import Data.Functor (class Functor, map, mapFlipped)
+import Data.Maybe (Maybe)
 import Data.Ord (lessThanOrEq, greaterThanOrEq)
 import Data.Semigroup (append)
 import Data.Tuple (Tuple(..), uncurry)
@@ -18,12 +19,10 @@ import Halogen.Query.HalogenM as HQ
 class' ∷ ∀ a b. String → HP.IProp (class ∷ String | b) a
 class' α = HP.class_ $ HH.ClassName α
 
-component' ∷ ∀ a b c d e f g h. 
-  (e → b) → (b → c (HC.ComponentSlot c a g d) d) → (d → HQ.HalogenM b d a h g Unit) → H.Component c f e h g
-component' α β ω = H.mkComponent { initialState, render, eval: H.mkEval H.defaultEval { handleAction = handleAction }}
-  where initialState = α
-        render = β
-        handleAction = ω
+component' ∷ ∀ a b c d e f g h. (f → d) → (d → e (HC.ComponentSlot e c a g) g) 
+             → (g → H.HalogenM d g c b a Unit) → (f → Maybe g) → H.Component e h f b a
+component' α β γ ω = H.mkComponent { initialState: α, render: β, 
+                                      eval: H.mkEval H.defaultEval { handleAction = γ, receive = ω } }
 
 mapCompose ∷ ∀ a b c f. Functor f ⇒ (a → b) → (c → f a) → c → f b
 mapCompose f = compose (map f)
