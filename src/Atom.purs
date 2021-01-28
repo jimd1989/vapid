@@ -1,6 +1,7 @@
 module Atom where
 
-import Prelude (($), (>>=), identity, pure, show)
+import Prelude (($), (>>=), flip, identity, pure, show)
+import Data.Array (snoc)
 import Data.Const (Const)
 import Data.Function (const)
 import Data.Int (fromString)
@@ -59,11 +60,12 @@ attributesSym = SProxy ∷ SProxy "attributes"
 attributes = component' i r a
   where
     i = const [{ num: 0, label: "", magnitude: Just 1 }]
-    a AddAttribute         = H.modify_ $ const []
+    a AddAttribute         = H.modify_ $ add
     a (UpdateAttributeN α) = H.modify_ $ updateNth α
     a (KillAttributeN α)   = H.modify_ $ const []
-    r α = HH.ul [class' "attributes"] ((mkSlots α) ◇ [HH.text $ show α])
+    r α = HH.ul [class' "attributes"] ((mkSlots α) ◇ [addButton, HH.text $ show α])
     reorder = withIndices (_{num = _})
+    add = reorder ∘ flip snoc { num: 0, label: "", magnitude: Just 1 } 
     mkSlot α = HH.slot attributeSym α.num attribute α pure
     mkSlots = mkSlot ◁ reorder
-    attributeSlot = HH.slot attributeSym 0 attribute {num: 0, label: "", magnitude: Just 1} pure
+    addButton = HH.button [class' "attributeAdd", HE.onClick (pure ∘ const AddAttribute)] [HH.text "+"]
