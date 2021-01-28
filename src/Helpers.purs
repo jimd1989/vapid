@@ -1,11 +1,13 @@
 module Helpers where
 
-import Prelude (($), compose)
+import Prelude (($), (-), compose)
 import Control.Apply (apply)
 import Control.Bind (composeKleisliFlipped)
+import Data.Array (length, range, updateAtIndices, zip)
 import Data.Functor (class Functor, map, mapFlipped)
 import Data.Ord (lessThanOrEq, greaterThanOrEq)
 import Data.Semigroup (append)
+import Data.Tuple (Tuple(..), uncurry)
 import Data.Unit (Unit)
 import Halogen as H
 import Halogen.Component as HC
@@ -25,6 +27,15 @@ component' α β ω = H.mkComponent { initialState, render, eval: H.mkEval H.def
 
 mapCompose ∷ ∀ a b c f. Functor f ⇒ (a → b) → (c → f a) → c → f b
 mapCompose f = compose (map f)
+
+enumerate ∷ ∀ a. Array a → Array (Tuple a Int)
+enumerate = zip ● (range 0 ∘ (_ - 1) ∘ length)
+
+withIndices ∷ ∀ a b. (a → Int → b) → Array a → Array b
+withIndices f = (uncurry f) ◁ enumerate
+
+updateNth ∷ ∀ a. { num ∷ Int | a } → Array { num ∷ Int | a } → Array { num ∷ Int | a }
+updateNth α = updateAtIndices [(Tuple α.num α)]
 
 -- Digraph Dw
 infixr 5 append as ◇

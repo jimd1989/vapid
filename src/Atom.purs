@@ -1,6 +1,6 @@
 module Atom where
 
-import Prelude (($), (>>=), pure, show)
+import Prelude (($), (>>=), identity, pure, show)
 import Data.Const (Const)
 import Data.Function (const)
 import Data.Int (fromString)
@@ -12,7 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Helpers ((∘), class', component')
+import Helpers ((∘), (◇), (◁), class', component', updateNth, withIndices)
 
 type Label = String
 labelSym = SProxy ∷ SProxy "label"
@@ -40,10 +40,10 @@ type AttributeState = { num ∷ Int, label ∷ Label, magnitude ∷ Magnitude }
 data AttributeAction = Label Label | Magnitude Magnitude | KillAttribute
 attributeSym = SProxy ∷ SProxy "attribute"
 
-attribute ∷ ∀ m. H.Component HH.HTML (Const Void) Int AttributesAction m
+attribute ∷ ∀ m. H.Component HH.HTML (Const Void) AttributeState AttributesAction m
 attribute = component' i r a
  where
-   i n = {num: n, label: "", magnitude: Just 1}
+   i = identity
    a (Label α)     = H.modify _{ label = α } >>= H.raise ∘ UpdateAttributeN
    a (Magnitude α) = H.modify _{ magnitude = α } >>= H.raise ∘ UpdateAttributeN
    a KillAttribute = H.get >>= H.raise ∘ KillAttributeN
@@ -60,7 +60,10 @@ attributes = component' i r a
   where
     i = const [{ num: 0, label: "", magnitude: Just 1 }]
     a AddAttribute         = H.modify_ $ const []
-    a (UpdateAttributeN α) = H.modify_ $ const []
+    a (UpdateAttributeN α) = H.modify_ $ updateNth α
     a (KillAttributeN α)   = H.modify_ $ const []
-    r α = HH.ul [class' "attributes"] [attributeSlot, HH.text $ show α]
-    attributeSlot = HH.slot attributeSym 0 attribute 0 pure
+    r α = HH.ul [class' "attributes"] ((mkSlots α) ◇ [HH.text $ show α])
+    reorder = withIndices (_{num = _})
+    mkSlot α = HH.slot attributeSym α.num attribute α pure
+    mkSlots = mkSlot ◁ reorder
+    attributeSlot = HH.slot attributeSym 0 attribute {num: 0, label: "", magnitude: Just 1} pure
