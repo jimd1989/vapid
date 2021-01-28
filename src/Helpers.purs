@@ -1,11 +1,8 @@
 module Helpers where
 
-import Prelude (($), compose, map)
+import Prelude (($), compose)
 import Control.Apply (apply)
 import Control.Bind (composeKleisliFlipped)
-import Control.Semigroupoid (compose)
-import Data.Const (Const)
-import Data.Function (const)
 import Data.Functor (class Functor, map, mapFlipped)
 import Data.Ord (lessThanOrEq, greaterThanOrEq)
 import Data.Semigroup (append)
