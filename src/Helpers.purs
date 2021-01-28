@@ -14,7 +14,6 @@ import Halogen as H
 import Halogen.Component as HC
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Halogen.Query.HalogenM as HQ
 
 class' ∷ ∀ a b. String → HP.IProp (class ∷ String | b) a
 class' α = HP.class_ $ HH.ClassName α

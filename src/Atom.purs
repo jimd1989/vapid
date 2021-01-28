@@ -16,9 +16,10 @@ import Helpers ((∘), (◇), (◁), addNth, class', component', deleteNth, reor
 
 type Label = String
 data LabelAction = GetLabel Label | UpdateLabel Label
+data LabelOutput = Label Label
 labelSym = SProxy ∷ SProxy "label"
 
-label ∷ ∀ m. H.Component HH.HTML (Const Void) Label AttributeAction m
+label ∷ ∀ m. H.Component HH.HTML (Const Void) Label LabelOutput m
 label = component' i r a e
   where
     i = const $ ""
@@ -29,9 +30,10 @@ label = component' i r a e
 
 type Magnitude = Maybe Int
 data MagnitudeAction = GetMagnitude Magnitude | UpdateMagnitude Magnitude
+data MagnitudeOutput = Magnitude Magnitude
 magnitudeSym = SProxy ∷ SProxy "magnitude"
 
-magnitude ∷ ∀ m. H.Component HH.HTML (Const Void) Magnitude AttributeAction m
+magnitude ∷ ∀ m. H.Component HH.HTML (Const Void) Magnitude MagnitudeOutput m
 magnitude = component' i r a e
   where
     i = const $ Just 1
@@ -43,22 +45,25 @@ magnitude = component' i r a e
     parse = pure ∘ UpdateMagnitude ∘ fromString
 
 type AttributeState = { num ∷ Int, label ∷ Label, magnitude ∷ Magnitude }
-data AttributeAction = GetAttribute AttributeState | Label Label | Magnitude Magnitude | KillAttribute
+data AttributeAction = GetAttribute AttributeState
+                     | UpdateAttributeLabel LabelOutput
+                     | UpdateAttributeMagnitude MagnitudeOutput
+                     | KillAttribute
 attributeSym = SProxy ∷ SProxy "attribute"
 
 attribute ∷ ∀ m. H.Component HH.HTML (Const Void) AttributeState AttributesAction m
 attribute = component' i r a e
  where
    i = identity
-   a (GetAttribute α) = H.modify_ $ const α
-   a (Label α)        = H.modify _{ label = α } >>= H.raise ∘ UpdateAttributeN
-   a (Magnitude α)    = H.modify _{ magnitude = α } >>= H.raise ∘ UpdateAttributeN
-   a KillAttribute    = H.get >>= H.raise ∘ KillAttributeN
+   a (GetAttribute α)                         = H.modify_ $ const α
+   a (UpdateAttributeLabel (Label α))         = H.modify _{ label = α } >>= H.raise ∘ UpdateAttributeN
+   a (UpdateAttributeMagnitude (Magnitude α)) = H.modify _{ magnitude = α } >>= H.raise ∘ UpdateAttributeN
+   a KillAttribute                            = H.get >>= H.raise ∘ KillAttributeN
    e = pure ∘ GetAttribute
    r α = HH.li [class' "attribute"] [xButton, labelSlot α, magnitudeSlot α]
    xButton         = HH.button [class' "attributeKill", HE.onClick (pure ∘ const KillAttribute)] [HH.text "x"]
-   labelSlot α     = HH.slot labelSym 0 label α.label pure
-   magnitudeSlot α = HH.slot magnitudeSym 1 magnitude α.magnitude pure
+   labelSlot α     = HH.slot labelSym 0 label α.label (pure ∘ UpdateAttributeLabel)
+   magnitudeSlot α = HH.slot magnitudeSym 1 magnitude α.magnitude (pure ∘ UpdateAttributeMagnitude)
 
 type AttributesState = Array AttributeState
 data AttributesAction = AddAttribute | UpdateAttributeN AttributeState | KillAttributeN AttributeState
@@ -73,6 +78,18 @@ attributes = component' i r a e
     a (KillAttributeN α)   = H.modify_ $ deleteNth α
     e = const Nothing
     r α = HH.ul [class' "attributes"] ((mkSlots α) ◇ [addButton, HH.text $ show α])
-    mkSlot α = HH.slot attributeSym α.num attribute α pure
-    mkSlots = mkSlot ◁ reorder
+    mkSlot α  = HH.slot attributeSym α.num attribute α pure
+    mkSlots   = mkSlot ◁ reorder
     addButton = HH.button [class' "attributeAdd", HE.onClick (pure ∘ const AddAttribute)] [HH.text "+"]
+
+type AtomState = {num ∷ Int, label ∷ Label, attributes ∷ AttributesState }
+data AtomAction = GetAtom AtomState | UpdateAtomLabel LabelOutput | UpdateAttributes AttributesState | KillAtom
+atomSym = SProxy ∷ SProxy "atom"
+
+atom = component' i r a e
+  where
+    i = identity
+    a = H.raise
+    r α = HH.li [class' "atom"] []
+    e = const Nothing
+    labelSlot α = HH.slot atomSym 0 label α.label pure
