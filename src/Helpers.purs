@@ -1,9 +1,9 @@
 module Helpers where
 
-import Prelude (($), (-), compose)
-import Control.Apply (apply)
+import Prelude (($), (+), (-), compose, flip)
+import Control.Apply (apply, lift2)
 import Control.Bind (composeKleisliFlipped)
-import Data.Array (length, range, updateAtIndices, zip)
+import Data.Array (drop, length, range, snoc, take, updateAtIndices, zip)
 import Data.Functor (class Functor, map, mapFlipped)
 import Data.Ord (lessThanOrEq, greaterThanOrEq)
 import Data.Semigroup (append)
@@ -34,8 +34,17 @@ enumerate = zip ● (range 0 ∘ (_ - 1) ∘ length)
 withIndices ∷ ∀ a b. (a → Int → b) → Array a → Array b
 withIndices f = (uncurry f) ◁ enumerate
 
+reorder ∷ ∀ a. Array { num ∷ Int | a } → Array { num ∷ Int | a }
+reorder = withIndices (_{num = _})
+
+addNth ∷ ∀ a. { num ∷ Int | a } → Array { num ∷ Int | a } → Array { num ∷ Int | a }
+addNth α = reorder ∘ flip snoc α
+
 updateNth ∷ ∀ a. { num ∷ Int | a } → Array { num ∷ Int | a } → Array { num ∷ Int | a }
-updateNth α = updateAtIndices [(Tuple α.num α)]
+updateNth α = reorder ∘ updateAtIndices [(Tuple α.num α)]
+
+deleteNth ∷ ∀ a. { num ∷ Int | a } → Array { num ∷ Int | a } → Array { num ∷ Int | a }
+deleteNth α = reorder ∘ lift2 append (take α.num) (drop $ α.num + 1)
 
 -- Digraph Dw
 infixr 5 append as ◇
