@@ -2,6 +2,7 @@ module Atom where
 
 import Prelude (($), (>>=), identity, pure, show)
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.Function (const)
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
@@ -12,37 +13,25 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Helpers ((∘), (◇), (◁), addNth, class', component', deleteNth, reorder, updateNth)
+import Helpers ((∘), (◇), (◁), addNth, class', component', decode, deleteNth, reorder, updateNth)
+import Components.Label (Label, LabelOutput(..), label, labelSym)
 
-type Label = String
-data LabelAction = GetLabel Label | UpdateLabel Label
-data LabelOutput = Label Label
-labelSym = SProxy ∷ SProxy "label"
-
-label ∷ ∀ m. H.Component HH.HTML (Const Void) Label LabelOutput m
-label = component' i r a e
-  where
-    i = const $ ""
-    a (GetLabel α)    = H.modify_ $ const α
-    a (UpdateLabel α) = H.raise $ Label α
-    e = pure ∘ GetLabel
-    r α = HH.input [class' "atomLabel", HP.value α, HE.onValueInput (pure ∘ UpdateLabel)]
-
-type Magnitude = Maybe Int
+type Magnitude = Either String Int
 data MagnitudeAction = GetMagnitude Magnitude | UpdateMagnitude Magnitude
 data MagnitudeOutput = Magnitude Magnitude
 magnitudeSym = SProxy ∷ SProxy "magnitude"
+defaultMagnitude = Right 1 ∷ Magnitude
 
 magnitude ∷ ∀ m. H.Component HH.HTML (Const Void) Magnitude MagnitudeOutput m
 magnitude = component' i r a e
   where
-    i = const $ Just 1
+    i = const $ defaultMagnitude
     a (GetMagnitude α)    = H.modify_ $ const α
     a (UpdateMagnitude α) = H.raise $ Magnitude α
     e = pure ∘ GetMagnitude
-    r Nothing  =  HH.input [class' "magnitudeError", HP.placeholder "integer", HE.onValueInput parse]
-    r (Just α) = HH.input [class' "magnitude", HP.value $ show α, HE.onValueInput parse]
-    parse = pure ∘ UpdateMagnitude ∘ fromString
+    r (Left α)  = HH.input [class' "magnitudeError", HP.value α, HP.placeholder "integer", HE.onValueInput parse]
+    r (Right α) = HH.input [class' "magnitude", HP.value $ show α, HE.onValueInput parse]
+    parse = pure ∘ UpdateMagnitude ∘ decode fromString
 
 type AttributeState = { num ∷ Int, label ∷ Label, magnitude ∷ Magnitude }
 data AttributeAction = GetAttribute AttributeState
@@ -56,7 +45,7 @@ attribute = component' i r a e
  where
    i = identity
    a (GetAttribute α)                         = H.modify_ $ const α
-   a (UpdateAttributeLabel (Label α))         = H.modify _{ label = α } >>= H.raise ∘ UpdateAttributeN
+   a (UpdateAttributeLabel (RaiseLabel α))    = H.modify _{ label = α } >>= H.raise ∘ UpdateAttributeN
    a (UpdateAttributeMagnitude (Magnitude α)) = H.modify _{ magnitude = α } >>= H.raise ∘ UpdateAttributeN
    a KillAttribute                            = H.get >>= H.raise ∘ KillAttributeN
    e = pure ∘ GetAttribute
@@ -72,8 +61,8 @@ attributesSym = SProxy ∷ SProxy "attributes"
 attributes ∷ ∀ m. H.Component HH.HTML (Const Void) Unit Void m
 attributes = component' i r a e
   where
-    i = const [{ num: 0, label: "", magnitude: Just 1 }]
-    a AddAttribute         = H.modify_ $ addNth {num: 0, label: "", magnitude: Just 1}
+    i = const [{ num: 0, label: "", magnitude: defaultMagnitude }]
+    a AddAttribute         = H.modify_ $ addNth {num: 0, label: "", magnitude: defaultMagnitude }
     a (UpdateAttributeN α) = H.modify_ $ updateNth α
     a (KillAttributeN α)   = H.modify_ $ deleteNth α
     e = const Nothing
@@ -93,3 +82,4 @@ atom = component' i r a e
     r α = HH.li [class' "atom"] []
     e = const Nothing
     labelSlot α = HH.slot atomSym 0 label α.label pure
+

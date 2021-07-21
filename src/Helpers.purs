@@ -1,9 +1,10 @@
 module Helpers where
 
-import Prelude (($), (+), (-), compose, flip)
+import Prelude (($), (-), add, compose, flip)
 import Control.Apply (apply, lift2)
 import Control.Bind (composeKleisliFlipped)
 import Data.Array (drop, length, range, snoc, take, updateAtIndices, zip)
+import Data.Either (Either, note)
 import Data.Functor (class Functor, map, mapFlipped)
 import Data.Maybe (Maybe)
 import Data.Ord (lessThanOrEq, greaterThanOrEq)
@@ -23,8 +24,17 @@ component' ∷ ∀ a b c d e f g h. (f → d) → (d → e (HC.ComponentSlot e c
 component' α β γ ω = H.mkComponent { initialState: α, render: β, 
                                       eval: H.mkEval H.defaultEval { handleAction = γ, receive = ω } }
 
+fork ∷ ∀ a b c d. (a → b → c) → (d → a) → (d → b) → d → c
+fork = lift2
+
 mapCompose ∷ ∀ a b c f. Functor f ⇒ (a → b) → (c → f a) → c → f b
 mapCompose f = compose (map f)
+
+blackbird ∷ ∀ a b c d. (c → d) → (a → b → c) → a → b → d
+blackbird = (∘) ∘ (∘)
+
+decode ∷ ∀ a. (String → Maybe a) → String → Either String a
+decode f = note ● f
 
 enumerate ∷ ∀ a. Array a → Array (Tuple a Int)
 enumerate = zip ● (range 0 ∘ (_ - 1) ∘ length)
@@ -36,13 +46,15 @@ reorder ∷ ∀ a. Array { num ∷ Int | a } → Array { num ∷ Int | a }
 reorder = withIndices (_{num = _})
 
 addNth ∷ ∀ a. { num ∷ Int | a } → Array { num ∷ Int | a } → Array { num ∷ Int | a }
-addNth α = reorder ∘ flip snoc α
+addNth = reorder ... flip snoc
 
 updateNth ∷ ∀ a. { num ∷ Int | a } → Array { num ∷ Int | a } → Array { num ∷ Int | a }
 updateNth α = reorder ∘ updateAtIndices [(Tuple α.num α)]
 
 deleteNth ∷ ∀ a. { num ∷ Int | a } → Array { num ∷ Int | a } → Array { num ∷ Int | a }
-deleteNth α = reorder ∘ lift2 append (take α.num) (drop $ α.num + 1)
+deleteNth = reorder ... fork append (take ∘ _.num) (drop ∘ add 1 ∘ _.num)
+
+infixr 8 blackbird as ...
 
 -- Digraph Dw
 infixr 5 append as ◇
