@@ -26,7 +26,7 @@ label ∷ ∀ m. Component HTML (Const Void) Label LabelOutput m
 label = component' i r a e
   where
     i = const $ ""
-    a (GetLabel α   ) = modify_ $ const α
+    a (GetLabel    α) = modify_ $ const α
     a (UpdateLabel α) = raise   $ RaiseLabel α
     e = pure ∘ GetLabel
     r α = input [class' "atomLabel", value α, onValueInput (pure ∘ UpdateLabel)]
