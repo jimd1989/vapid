@@ -1,5 +1,7 @@
 module Atom where
 
+-- The primary problem unit. Atoms are sorted into Groups according to their Attributes
+
 import Prelude (($), (>>=), identity, pure, show)
 import Data.Const (Const)
 import Data.Either (Either(..))
@@ -15,27 +17,17 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Helpers ((∘), (◇), (◁), addNth, class', component', decode, deleteNth, reorder, updateNth)
 import Components.Attribute (Attribute, AttributeOutput(..), attribute, attributeSym)
+import Components.Attributes (Attributes, attributes, attributesSym)
 import Components.Label (Label, LabelOutput(..), label, labelSym)
 import Components.Magnitude (Magnitude, MagnitudeOutput(..), defaultMagnitude, magnitude, magnitudeSym)
 
-type AttributesState = Array Attribute
-attributesSym = SProxy ∷ SProxy "attributes"
+type AtomState = {num ∷ Int, label ∷ Label, attributes ∷ Attributes }
 
-attributes ∷ ∀ m. H.Component HH.HTML (Const Void) Unit Void m
-attributes = component' i r a e
-  where
-    i = const [{ num: 0, label: "", magnitude: defaultMagnitude }]
-    a AddAttribute         = H.modify_ $ addNth {num: 0, label: "", magnitude: defaultMagnitude }
-    a (UpdateAttributeN α) = H.modify_ $ updateNth α
-    a (KillAttributeN α)   = H.modify_ $ deleteNth α
-    e = const Nothing
-    r α = HH.ul [class' "attributes"] ((mkSlots α) ◇ [addButton, HH.text $ show α])
-    mkSlot α  = HH.slot attributeSym α.num attribute α pure
-    mkSlots   = mkSlot ◁ reorder
-    addButton = HH.button [class' "attributeAdd", HE.onClick (pure ∘ const AddAttribute)] [HH.text "+"]
+data AtomAction = GetAtom AtomState
+                | UpdateAtomLabel LabelOutput
+                | UpdateAttributes Attributes
+                | KillAtom
 
-type AtomState = {num ∷ Int, label ∷ Label, attributes ∷ AttributesState }
-data AtomAction = GetAtom AtomState | UpdateAtomLabel LabelOutput | UpdateAttributes AttributesState | KillAtom
 atomSym = SProxy ∷ SProxy "atom"
 
 atom = component' i r a e
@@ -45,4 +37,3 @@ atom = component' i r a e
     r α = HH.li [class' "atom"] []
     e = const Nothing
     labelSlot α = HH.slot atomSym 0 label α.label pure
-

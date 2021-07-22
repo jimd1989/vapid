@@ -1,4 +1,6 @@
-module Components.Attribute where
+module Components.Attribute (Attribute, AttributeOutput(..), attribute, attributeSym, defaultAttribute) where
+
+-- A Magnitude/Label pair on an Atom
 
 import Prelude (($), (>>=), identity, pure)
 import Data.Const (Const)
@@ -24,6 +26,8 @@ data AttributeOutput = AddAttribute
                      | KillAttributeN   Attribute
 
 attributeSym = SProxy ∷ SProxy "attribute"
+
+defaultAttribute = { num: 0, label: "", magnitude: defaultMagnitude } ∷ Attribute
 
 attribute ∷ ∀ m. Component HTML (Const Void) Attribute AttributeOutput m
 attribute = component' i r a e

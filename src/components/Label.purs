@@ -1,6 +1,6 @@
 module Components.Label (Label, LabelOutput(..), label, labelSym) where
 
--- A text label on an Attribute
+-- A text label on an Attribute or Atom
 
 import Prelude (($), pure)
 import Data.Const (Const)
