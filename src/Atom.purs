@@ -14,32 +14,11 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Helpers ((∘), (◇), (◁), addNth, class', component', decode, deleteNth, reorder, updateNth)
+import Components.Attribute (Attribute, AttributeOutput(..), attribute, attributeSym)
 import Components.Label (Label, LabelOutput(..), label, labelSym)
 import Components.Magnitude (Magnitude, MagnitudeOutput(..), defaultMagnitude, magnitude, magnitudeSym)
 
-type AttributeState = { num ∷ Int, label ∷ Label, magnitude ∷ Magnitude }
-data AttributeAction = GetAttribute AttributeState
-                     | UpdateAttributeLabel LabelOutput
-                     | UpdateAttributeMagnitude MagnitudeOutput
-                     | KillAttribute
-attributeSym = SProxy ∷ SProxy "attribute"
-
-attribute ∷ ∀ m. H.Component HH.HTML (Const Void) AttributeState AttributesAction m
-attribute = component' i r a e
- where
-   i = identity
-   a (GetAttribute α)                              = H.modify_ $ const α
-   a (UpdateAttributeLabel (RaiseLabel α))         = H.modify _{ label = α } >>= H.raise ∘ UpdateAttributeN
-   a (UpdateAttributeMagnitude (RaiseMagnitude α)) = H.modify _{ magnitude = α } >>= H.raise ∘ UpdateAttributeN
-   a KillAttribute                                 = H.get >>= H.raise ∘ KillAttributeN
-   e = pure ∘ GetAttribute
-   r α = HH.li [class' "attribute"] [xButton, labelSlot α, magnitudeSlot α]
-   xButton         = HH.button [class' "attributeKill", HE.onClick (pure ∘ const KillAttribute)] [HH.text "x"]
-   labelSlot α     = HH.slot labelSym 0 label α.label (pure ∘ UpdateAttributeLabel)
-   magnitudeSlot α = HH.slot magnitudeSym 1 magnitude α.magnitude (pure ∘ UpdateAttributeMagnitude)
-
-type AttributesState = Array AttributeState
-data AttributesAction = AddAttribute | UpdateAttributeN AttributeState | KillAttributeN AttributeState
+type AttributesState = Array Attribute
 attributesSym = SProxy ∷ SProxy "attributes"
 
 attributes ∷ ∀ m. H.Component HH.HTML (Const Void) Unit Void m

@@ -17,7 +17,7 @@ import Helpers ((∘), class', component', decode)
 
 type Magnitude = Either String Int
 
-data MagnitudeAction = GetMagnitude Magnitude
+data MagnitudeAction = GetMagnitude    Magnitude
                      | UpdateMagnitude Magnitude
 
 data MagnitudeOutput = RaiseMagnitude Magnitude

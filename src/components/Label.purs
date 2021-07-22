@@ -15,7 +15,7 @@ import Helpers ((∘), class', component')
 
 type Label = String
 
-data LabelAction = GetLabel Label
+data LabelAction = GetLabel    Label
                  | UpdateLabel Label
 
 data LabelOutput = RaiseLabel Label
